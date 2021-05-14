@@ -2,12 +2,23 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as util from 'util';
+import * as SerialPort from 'serialport';
 
 const readFile = util.promisify(fs.readFile);
 
 async function renderContent(context: vscode.ExtensionContext, panel: vscode.WebviewPanel) {
   const filename = path.join(context.extensionPath, 'content', 'index.html');
   panel.webview.html = await (await readFile(filename)).toString();
+}
+
+function startReading(panel: vscode.WebviewPanel) {
+  const port = new SerialPort('/dev/cu.SLAB_USBtoUART', {
+    baudRate: 115200
+  }, (err: any) => console.log(err));
+
+  port.on('data', (data: any) => {
+    console.log(data);
+  });
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -20,15 +31,11 @@ export function activate(context: vscode.ExtensionContext) {
         enableScripts: true,
       }
     );
+    
     renderContent(context, panel);
-    const interval = setInterval(() => {
-      panel.webview.postMessage({
-        data: [new Date().getTime()]
-      });
+    startReading(panel);      
 
-    }, 1000);
     panel.onDidDispose(() => {
-      clearInterval(interval);
     }, undefined, context.subscriptions);
   });
 
