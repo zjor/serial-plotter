@@ -5,6 +5,11 @@ import * as util from 'util';
 
 const readFile = util.promisify(fs.readFile);
 
+async function renderContent(context: vscode.ExtensionContext, panel: vscode.WebviewPanel) {
+  const filename = path.join(context.extensionPath, 'content', 'index.html');
+  panel.webview.html = await (await readFile(filename)).toString();
+}
+
 export function activate(context: vscode.ExtensionContext) {
   let disposable = vscode.commands.registerCommand('serial-plotter.run', async () => {
     const panel = vscode.window.createWebviewPanel(
@@ -15,9 +20,16 @@ export function activate(context: vscode.ExtensionContext) {
         enableScripts: true,
       }
     );
+    renderContent(context, panel);
+    const interval = setInterval(() => {
+      panel.webview.postMessage({
+        data: [new Date().getTime()]
+      });
 
-    const filename = path.join(context.extensionPath, 'content', 'index.html');
-    panel.webview.html = await (await readFile(filename)).toString();
+    }, 1000);
+    panel.onDidDispose(() => {
+      clearInterval(interval);
+    }, undefined, context.subscriptions);
   });
 
   context.subscriptions.push(disposable);

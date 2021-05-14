@@ -1,11 +1,86 @@
 <!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Cat Coding</title>
-  </head>
-  <body>
-      <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300" />
-  </body>
-  </html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serial Plotter</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.2.0/chart.min.js"></script>
+  <style>
+    .container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .plot-container {
+      width: 800px;
+      height: 400px;
+      position: relative;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="plot-container">
+      <canvas id="plot"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const data = {
+      labels: [],
+      datasets: [{
+        label: 'DS1',
+        backgroundColor: 'rgb(255, 99, 132)',
+        borderColor: 'rgb(255, 99, 132)',
+        borderWidth: 1,
+        radius: 0,
+        data: [],
+      }]
+    };
+    const config = {
+      type: 'line',
+      data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            type: 'linear'
+          }
+        }
+      }
+    };
+
+    const plot = new Chart(
+      document.getElementById('plot'),
+      config
+    );
+
+    let i = 0;
+
+    function addPoint(i, value) {
+      let shifted = false;
+      plot.data.labels.push(i);
+      plot.data.datasets.forEach((ds) => {
+        ds.data.push(value);
+        if (ds.data.length > 10) {
+          ds.data.shift();
+          shifted = true;
+        }
+      });
+      
+      plot.update();
+    }
+
+    window.addEventListener('message', (e) => {
+      addPoint(i, e.data.data[0]);
+      i++;
+    })
+  </script>
+</body>
+
+</html>
